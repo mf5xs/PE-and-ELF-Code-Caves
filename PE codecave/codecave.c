@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
 	pish->Misc.VirtualSize += dwShellcodeSize;
 
 	/***********************************************
-	|	(d) set payload function addresses     |
+	|	(e) set payload function addresses     |
 	***********************************************/
 
 	HMODULE hLibrary = LoadLibrary("kernel32.dll");
