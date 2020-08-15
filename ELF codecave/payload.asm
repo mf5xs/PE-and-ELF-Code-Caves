@@ -7,6 +7,8 @@ section .text
 
 _start:
 
+	pushad
+	
 	; sys_write
 	mov	edx, 	5	; arg3 = len of string
 
@@ -18,3 +20,7 @@ _start:
 	mov 	eax, 	4	; sys_write syscall number
 	int 	0x80
 
+	popad
+
+	push	0xAAAAAAAA	; placeholder for oep
+	ret
